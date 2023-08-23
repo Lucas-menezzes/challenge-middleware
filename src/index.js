@@ -44,17 +44,15 @@ function checksTodoExists(request, response, next) {
   if (!validate(id)) {
     return response.status(400).json({ error: 'Invalid Id' })
   }
-  
-  if(!uuidv4(id)){
-    return response.status(404).json({ error: 'Unexpected' });
-  }
   // encontra o usuario pelo username
   const user = users.find(user => user.username === username);
+
   if (!user) {
     return response.status(404).json({ error: 'User not found.' });
   }
   // // encontra o TODO pelo id e verifica se pertence ao usuario
-  const todo = todos.find(todo => todo.id === id && todo.userId === user.id);
+  const todo = user.todos.find(todo => todo.id === id) ///&& todo.userId === user.id);
+
   if (!todo) {
     return response.status(404).json({ error: 'Todo not found for this user.' });
   }
@@ -138,38 +136,29 @@ app.post('/todos', checksExistsUserAccount, checksCreateTodosUserAvailability, (
   return response.status(201).json(newTodo);
 });
 
-// app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
-//   const { id } = request.params;
-//   const { username } = request;
-//   const { title, deadline } = request.body;
-
-//   const getUser = users.find(user => user.username === username);
-
-//   if(!getUser) {
-//     return response.status(404).json({ error: "User not found"});
-//   }
-
-//   const userTodo = getUser.todos.find(todo => todo.id === id);
-
-//   if(!userTodo) {
-//     return response.status(404).json({error: 'Todo not found'})
-//   }
-
-//   userTodo.title = title;
-//   userTodo.deadline = deadline;
-
-//   return response.json(userTodo);
-// });
-// });
 app.put('/todos/:id', checksTodoExists, (request, response) => {
+  const { user }  = request;
   const { title, deadline } = request.body;
-  const { todo } = request;
+  const {id} = request.params;
 
+  const todo = user.todos.find(todo => todo.id === id)
+
+  if (!todo) {
+    return response.status(404).json({ error: "todo not found"});
+  }
   todo.title = title;
   todo.deadline = new Date(deadline);
-
   return response.json(todo);
+
 });
+//   const { title, deadline } = request.body;
+//   const { todo } = request;
+
+//   todo.title = title;
+//   todo.deadline = new Date(deadline);
+
+//   return response.json(todo);
+// });
 
 app.patch('/todos/:id/done', checksTodoExists, (request, response) => {
   const { todo } = request;
